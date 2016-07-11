@@ -1,0 +1,47 @@
+##
+#
+# 설치
+# sudo apt-get install monit
+#
+# 스크립트 작성
+# /etc/monit/monitrc 의 마지막 부분에 아래 문장을 추가 
+#
+# 모니터링 시작
+# sudo service monit restart
+#
+##
+
+
+###############################################################################
+#   bitgold.coin.infosite
+###############################################################################
+
+##
+#
+# nginx
+#
+##
+
+check process nginx with pidfile /var/run/nginx.pid
+  start program = "/etc/init.d/nginx start"
+  stop program  = "/etc/init.d/nginx stop"
+  group www-data 
+
+
+##
+#
+# bgc-infosite
+#
+##
+
+check host coin.bgc-e.com with address coin.bgc-e.com
+    start program = "/etc/init.d/bgc-infosite restart"
+    stop program = "/etc/init.d/bgc-infosite stop"
+    if failed host coin.bgc-e.com
+        port 80 protocol http
+        and request "/Monit.html"
+    then restart
+
+###############################################################################
+#   bitgold.coin.infosite
+###############################################################################

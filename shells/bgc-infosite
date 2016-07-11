@@ -1,0 +1,130 @@
+#!/bin/sh
+# Provides:          LEE SEOGNAHN
+
+# service description
+DESCRIPTION="BGC Information service"
+
+daemon_name=bgc-infosite
+daemon_exec=
+daemon_apps="coin.bgc-e.com:/:/home/odinsoft/ubsvc5/solution/bitgold/bgc-infosite/src/"
+daemon_port=9003
+
+# path to application
+PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
+# export DBUS_SESSION_BUS_ADDRESS="unix:path=/var/run/dbus/system_bus_socket"
+# export MONO_OPTIONS="--debug --gc=sgen"
+export MONO_IOMAP=all  
+
+# execution name
+MONOSERVER=$(which fastcgi-mono-server4)
+PROCESSNAME=
+
+# process id
+MONOSERVER_PID=$(ps -auxf | grep ${daemon_apps} | grep -v grep | awk '{print $2}')
+MONOSERVER_DIR=
+
+# Exit if the package is not installed
+[ -x "$MONOSERVER" ] || exit 0
+
+# Load the VERBOSE setting and other rcS variables
+. /lib/init/vars.sh
+
+# Define LSB log_* functions.
+# Depend on lsb-base (>= 3.0-6) to ensure that this file is present.
+. /lib/lsb/init-functions
+
+# export MONO_ASPNET_WEBCONFIG_CACHESIZE="4096"
+
+#
+# Function that starts the daemon/service
+#
+do_start()
+{       
+        log_daemon_msg "Starting ${DESCRIPTION}"
+
+        if [ -z "${MONOSERVER_PID}" ]; 
+        then
+
+            # ${MONOSERVER} /applications=${daemon_apps} /address=127.0.0.1 /socket=tcp:${daemon_port} /logfile=/var/log/${daemon_name}-fastcgi.log /loglevels=All /verbose=True &
+            ${MONOSERVER} /applications=${daemon_apps} /address=127.0.0.1 /socket=tcp:${daemon_port} &
+            log_end_msg 0
+
+        else
+
+            log_daemon_msg "${daemon_name} is running"
+            log_end_msg 1
+
+        fi
+}
+
+#
+# Function that stops the daemon/service
+#
+do_stop()
+{
+        log_daemon_msg "Stopping ${DESCRIPTION}"
+
+        if [ -n "${MONOSERVER_PID}" ]; then
+
+            kill -9 ${MONOSERVER_PID}
+
+            sleep 1
+
+            log_end_msg 0
+
+        else
+
+            log_daemon_msg "${daemon_name} is not running"
+            log_end_msg 1
+
+        fi
+}
+
+#
+# Function that status the daemon/service
+#
+do_status()
+{
+ 
+        if [ -n "${MONOSERVER_PID}" ]; then
+            
+            log_daemon_msg "${daemon_name} is running"
+            log_end_msg 0
+
+        else
+        
+            log_daemon_msg "${daemon_name} is not running"
+            log_end_msg 0
+
+        fi
+}
+
+
+case "$1" in
+
+        start)
+            do_start
+            ;;
+
+        stop)
+            
+            do_stop
+            ;;
+
+        restart)
+            
+            "$0" stop
+            "$0" start
+    	    ;;
+
+        status)
+
+            do_status
+	        ;;
+
+        *)
+            echo "Usage: $daemon_name {start|stop|restart||status}" >&2
+            ;;
+esac
+
+exit 0
